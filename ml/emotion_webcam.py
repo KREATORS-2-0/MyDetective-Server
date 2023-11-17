@@ -17,6 +17,7 @@ import time
 from deepface import DeepFace
 import threading
 
+
 class EmotionAnalyzer:
     def __init__(self):
         self.cap = None
@@ -32,12 +33,15 @@ class EmotionAnalyzer:
         return True
 
     def start_analysis(self, emotionData, detectiveIndex):
+        current_emotion = []
         if not self.start_camera():
             return
         self.running = True
         if self.analysis_thread is None or not self.analysis_thread.is_alive():
-            self.analysis_thread = threading.Thread(target=analyze_emotions, args=(self, emotionData, detectiveIndex))
+            self.analysis_thread = threading.Thread(
+                target=analyze_emotions, args=(self, emotionData, detectiveIndex, current_emotion))
             self.analysis_thread.start()
+            return current_emotion
 
     def stop_analysis(self):
         self.running = False
@@ -51,7 +55,8 @@ class EmotionAnalyzer:
             self.cap = None
         # cv2.destroyAllWindows()
 
-def analyze_emotions(analyzer, emotionData, detectiveIndex):
+
+def analyze_emotions(analyzer, emotionData, detectiveIndex, current_emotion):
     if analyzer.running and analyzer.cap.isOpened():
         ret, frame = analyzer.cap.read()
         if not ret:
@@ -59,24 +64,30 @@ def analyze_emotions(analyzer, emotionData, detectiveIndex):
             return
 
         try:
-            analysis = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
-            dom_emotion = analysis['emotion']['dominant_emotion']
+            analysis = DeepFace.analyze(
+                frame, actions=['emotion'], enforce_detection=False)
+            dom_emotion = analysis[0]['dominant_emotion']
             print("Detected emotion:", dom_emotion)
 
-            current_formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            current_formatted_time = time.strftime(
+                '%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
             if detectiveIndex not in emotionData:
-                emotionData[detectiveIndex] = {"TimeStamp": [], "Emotion": []}
+                emotionData[detectiveIndex] = {
+                    "TimeStamp": [], "Emotion": []}
 
-            emotionData[detectiveIndex]["TimeStamp"].append(current_formatted_time)
+            emotionData[detectiveIndex]["TimeStamp"].append(
+                current_formatted_time)
             emotionData[detectiveIndex]["Emotion"].append(dom_emotion)
-            print(emotionData)
-
+            print("I am printing!!", emotionData)
+            current_emotion.append(dom_emotion)
         except Exception as e:
             print("An error occurred during emotion analysis:", e)
 
+
 def main(detectiveData, emotionData, analyzer):
     while True:
-        command_input = input("Enter command (initiate/start/pause/terminate): ").strip().lower()
+        command_input = input(
+            "Enter command (initiate/start/pause/terminate): ").strip().lower()
         if command_input in ["initiate", "start", "pause", "terminate"]:
             detectiveIndex = str(len(detectiveData) + 1)
             detectiveData[detectiveIndex] = {"command": [command_input]}
@@ -101,9 +112,9 @@ def main(detectiveData, emotionData, analyzer):
 
         time.sleep(1)
 
+
 if __name__ == "__main__":
     detectiveData = {}
     emotionData = {}
     analyzer = EmotionAnalyzer()
     main(detectiveData, emotionData, analyzer)
-
