@@ -1,76 +1,120 @@
+# # Detective Data:
+# # {
+# #     "1": {"command": ["initiate", "start", "pause", "terminate"]},
+# #     "2": {"command": ["initiate", "start", "pause", "terminate"]},
+# #     "3": {"command": ["initiate", "start", "pause", "terminate"]},
+# # }
+
+# # Emotion Data:
+# # {
+# #     "1": {"TimeStamp": ["2021-05-01 12:00:00", "2021-05-01 12:00:15"], "Emotion": ["happy", "sad", "angry", "neutral", "sad", "happy", "sad", "angry", "neutral", "sad", "happy", "sad", "angry", "neutral", "sad"]},
+# #     "2": {"TimeStamp": ["2021-05-01 12:00:15", "2021-05-01 12:00:30"], "Emotion": ["happy", "sad", "angry", "neutral", "sad", "happy", "sad", "angry", "neutral", "sad", "happy", "sad", "angry", "neutral", "sad"]},
+# # }
+
+
 import cv2
 import time
 from deepface import DeepFace
+import threading
 
-def process_frame(cap, emotionData, emotionIndex):
-    ret, frame = cap.read()
-    if not ret:
-        print("Can't receive frame (stream end?). Exiting ...")
-        return False, None
 
-    # Your frame processing code here...
-    # For example, analyzing the frame for emotions
-    try:
-        analysis = DeepFace.analyze(frame, actions=['emotion'], silent=True)
-        dom_emotion = analysis['dominant_emotion']
-        print(dom_emotion)
-        return True, dom_emotion
-    except Exception as e:
-        print("An error occurred during frame analysis:", e)
-        return True, None
+class EmotionAnalyzer:
+    def __init__(self):
+        self.cap = None
+        self.analysis_thread = None
+        self.running = False
 
-def main(detectiveData, emotionData):
-    cap = None
-    last_analysis_time = time.time()
-    emotionIndex = 1
-    detectiveIndex = 1
-
-    while True:
-        command = detectiveData[detectiveIndex].get("command", "")
-        if command == "initiate":
-            print("Initiating...")
-            cap = cv2.VideoCapture(0)
-            if not cap.isOpened():
+    def start_camera(self):
+        if self.cap is None:
+            self.cap = cv2.VideoCapture(0)
+            if not self.cap.isOpened():
                 print("Cannot open camera")
-                break
+                return False
+        return True
 
-        elif command == "start" and cap is not None:
-            print("Starting...")
-            current_time = time.time()
-            if current_time - last_analysis_time >= 1.5:
-                success, emotion = process_frame(cap, emotionData, emotionIndex)
-                if not success:
-                    break
-                if emotion:
-                    emotionData[emotionIndex]["Emotion"] = emotion
-                last_analysis_time = current_time
+    def start_analysis(self, emotionData, detectiveIndex):
+        current_emotion = []
+        if not self.start_camera():
+            return
+        self.running = True
+        if self.analysis_thread is None or not self.analysis_thread.is_alive():
+            self.analysis_thread = threading.Thread(
+                target=analyze_emotions, args=(self, emotionData, detectiveIndex, current_emotion))
+            self.analysis_thread.start()
+            return current_emotion
 
-        elif command == "pause":
-            print("Pausing...")
-            if cap:
-                cap.release()
-            break
+    def stop_analysis(self):
+        self.running = False
+        if self.analysis_thread is not None:
+            self.analysis_thread.join()
+            self.analysis_thread = None
 
-        elif command == "terminate":
-            print("Terminating...")
-            if cap:
-                cap.release()
-            cv2.destroyAllWindows()
-            break
+    def stop_camera(self):
+        if self.cap:
+            self.cap.release()
+            self.cap = None
+        # cv2.destroyAllWindows()
 
-        time.sleep(0.1)  # Add a small delay to prevent CPU overuse
 
-# Test function
-def test():
-    emotionData = {"1": {"TimeStamp": "", "Emotion": ""}}
-    detectiveData = {"1": {"command": ""}}
+def analyze_emotions(analyzer, emotionData, detectiveIndex, current_emotion):
+    if analyzer.running and analyzer.cap.isOpened():
+        ret, frame = analyzer.cap.read()
+        if not ret:
+            print("Can't receive frame. Exiting ...")
+            return
 
+        try:
+            analysis = DeepFace.analyze(
+                frame, actions=['emotion'], enforce_detection=False)
+            dom_emotion = analysis[0]['dominant_emotion']
+            print("Detected emotion:", dom_emotion)
+
+            current_formatted_time = time.strftime(
+                '%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            if detectiveIndex not in emotionData:
+                emotionData[detectiveIndex] = {
+                    "TimeStamp": [], "Emotion": []}
+
+            emotionData[detectiveIndex]["TimeStamp"].append(
+                current_formatted_time)
+            emotionData[detectiveIndex]["Emotion"].append(dom_emotion)
+            print("I am printing!!", emotionData)
+            current_emotion.append(dom_emotion)
+        except Exception as e:
+            print("An error occurred during emotion analysis:", e)
+
+
+def main(detectiveData, emotionData, analyzer):
     while True:
-        command = input("Enter a command: ")
-        detectiveData["1"]["command"] = command
-        main(detectiveData, emotionData)
-        if command == "terminate":
-            break
+        command_input = input(
+            "Enter command (initiate/start/pause/terminate): ").strip().lower()
+        if command_input in ["initiate", "start", "pause", "terminate"]:
+            detectiveIndex = str(len(detectiveData) + 1)
+            detectiveData[detectiveIndex] = {"command": [command_input]}
+            print(f"Command '{command_input}' added to detectiveData.")
+
+            if command_input == "initiate":
+                print("Initiating...")
+                analyzer.start_camera()
+
+            if command_input == "start":
+                print("Starting...")
+                analyzer.start_analysis(emotionData, detectiveIndex)
+
+            if command_input == "pause":
+                print("Pausing...")
+                analyzer.stop_analysis()
+
+            if command_input == "terminate":
+                print("Terminating...")
+                analyzer.stop_camera()
+                return
+
+        time.sleep(1)
+
 
 if __name__ == "__main__":
-    test()
+    detectiveData = {}
+    emotionData = {}
+    analyzer = EmotionAnalyzer()
+    main(detectiveData, emotionData, analyzer)
