@@ -5,30 +5,43 @@ $ pip install pyaudio
 
 import speech_recognition as sr
 from transformers import pipeline
+from pynput import keyboard
 
-# Initialize recognizer
-r = sr.Recognizer()
+class SpeechAnalyzer:
+    def __init__(self):
+        self.r = sr.Recognizer()
+        self.candidate_labels = ['happy', 'sad', 'angry', 'fear', 'neutral']
+        self.model = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+        self.classifier = pipeline('zero-shot-classification', model=self.model)
+        self.is_listening = False
 
-
-classifier = pipeline('zero-shot-classification', model="MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli")
-candidate_labels = ['happy', 'sad', 'angry', 'fear', 'neutral']
-
-
-# Capture audio from the microphone
-with sr.Microphone() as source:
-    
-
-    while True:
-        
+    def on_press(self, key):
         try:
-            audio = r.listen(source, timeout=2, phrase_time_limit=5)
-            # Recognize the speech in the audio
-            text = r.recognize_google(audio)
-            
-            output = classifier(text, candidate_labels, multi_label=False)
-            dom_emotion = output['labels'][0]
-            print(dom_emotion)
-        except sr.UnknownValueError:
-            print("Could not understand audio")
-        except sr.RequestError as e:
-            print(f"Error; {e}")
+            if key.char == 'r':
+                self.is_listening = True
+            elif key.char == 's' or key.char == 'q':
+                self.is_listening = False
+        except AttributeError:
+            pass
+
+    def run(self):
+        with sr.Microphone() as source:
+
+            while True:
+                try:
+                     audio = self.r.listen(source, timeout=3, phrase_time_limit=None)
+                     text = self.r.recognize_google(audio)
+                     emotion = self.classify_emotion(text)
+                     print(emotion)
+                except Exception as e:
+                    print("An unexpected error occurred:", e)
+                    
+    
+    def classify_emotion(self, text):
+        output = self.classifier(text, self.candidate_labels, multi_label=False)
+        return output['labels'][0]
+
+if __name__ == "__main__":
+    speech_analyzer = SpeechAnalyzer()
+    speech_analyzer.run()
+    
