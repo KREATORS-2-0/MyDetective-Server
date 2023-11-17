@@ -52,34 +52,27 @@ class EmotionAnalyzer:
         # cv2.destroyAllWindows()
 
 def analyze_emotions(analyzer, emotionData, detectiveIndex):
-    last_analysis_time = time.time()
-    while analyzer.running and analyzer.cap.isOpened():
+    if analyzer.running and analyzer.cap.isOpened():
         ret, frame = analyzer.cap.read()
         if not ret:
             print("Can't receive frame. Exiting ...")
-            break
+            return
 
-        current_time = time.time()
-        if current_time - last_analysis_time >= 1.5:
-            try:
-                analysis = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
-                dom_emotion = analysis[0]['dominant_emotion']
-                print("Detected emotion:", dom_emotion)
+        try:
+            analysis = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
+            dom_emotion = analysis['emotion']['dominant_emotion']
+            print("Detected emotion:", dom_emotion)
 
-                current_formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))
-                if detectiveIndex not in emotionData:
-                    emotionData[detectiveIndex] = {"TimeStamp": [], "Emotion": []}
+            current_formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            if detectiveIndex not in emotionData:
+                emotionData[detectiveIndex] = {"TimeStamp": [], "Emotion": []}
 
-                emotionData[detectiveIndex]["TimeStamp"].append(current_formatted_time)
-                emotionData[detectiveIndex]["Emotion"].append(dom_emotion)
-                print(emotionData)
+            emotionData[detectiveIndex]["TimeStamp"].append(current_formatted_time)
+            emotionData[detectiveIndex]["Emotion"].append(dom_emotion)
+            print(emotionData)
 
-                last_analysis_time = current_time
-            except Exception as e:
-                print("An error occurred during emotion analysis:", e)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        except Exception as e:
+            print("An error occurred during emotion analysis:", e)
 
 def main(detectiveData, emotionData, analyzer):
     while True:
@@ -113,3 +106,4 @@ if __name__ == "__main__":
     emotionData = {}
     analyzer = EmotionAnalyzer()
     main(detectiveData, emotionData, analyzer)
+
