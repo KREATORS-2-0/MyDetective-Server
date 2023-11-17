@@ -1,6 +1,6 @@
-const fetch = require("node-fetch");
+const axios = require("axios");
 
-const openaiApiKey = "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"; // Load API key from environment variable
+const openaiApiKey = "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"; // Load API key from environment variable
 
 async function getCompletion(
   prompt,
