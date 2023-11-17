@@ -15,6 +15,7 @@ class SpeechAnalyzer:
         self.classifier = pipeline('zero-shot-classification', model=self.model)
         self.is_listening = False
         self.data = {"Emotion": None}
+        self.full_text = ""
 
     def on_press(self, key):
         try:
@@ -23,6 +24,7 @@ class SpeechAnalyzer:
             elif key.char == 's' or key.char == 'q':
                 self.is_listening = False
                 print(self.data)
+                print(self.full_text)
                 if key.char == 'q':
                     return False
         except AttributeError:
@@ -42,6 +44,7 @@ class SpeechAnalyzer:
                         print("Litening...")
                         audio = self.r.listen(source, timeout=3, phrase_time_limit=None)
                         text = self.r.recognize_google(audio)
+                        self.full_text += (text + '\n')
                         emotion = self.classify_emotion(text)
                         self.data["Emotion"] = emotion
                     except Exception as e:
