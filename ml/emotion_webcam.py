@@ -23,6 +23,7 @@ class EmotionAnalyzer:
         self.cap = None
         self.analysis_thread = None
         self.running = False
+        self.currentEmotion = None
 
     def start_camera(self):
         if self.cap is None:
@@ -39,9 +40,8 @@ class EmotionAnalyzer:
         self.running = True
         if self.analysis_thread is None or not self.analysis_thread.is_alive():
             self.analysis_thread = threading.Thread(
-                target=analyze_emotions, args=(self, emotionData, detectiveIndex, current_emotion))
+                target=self.analyze_emotions, args=(self, emotionData, detectiveIndex))
             self.analysis_thread.start()
-            return current_emotion
 
     def stop_analysis(self):
         self.running = False
@@ -55,10 +55,9 @@ class EmotionAnalyzer:
             self.cap = None
         # cv2.destroyAllWindows()
 
-
-def analyze_emotions(analyzer, emotionData, detectiveIndex, current_emotion):
-    if analyzer.running and analyzer.cap.isOpened():
-        ret, frame = analyzer.cap.read()
+    def analyze_emotions(self, emotionData, detectiveIndex):
+        if self.running and self.cap.isOpened():
+            ret, frame = self.cap.read()
         if not ret:
             print("Can't receive frame. Exiting ...")
             return
@@ -78,10 +77,12 @@ def analyze_emotions(analyzer, emotionData, detectiveIndex, current_emotion):
             emotionData[detectiveIndex]["TimeStamp"].append(
                 current_formatted_time)
             emotionData[detectiveIndex]["Emotion"].append(dom_emotion)
-            print("I am printing!!", emotionData)
-            current_emotion.append(dom_emotion)
+            self.currentEmotion = dom_emotion
         except Exception as e:
             print("An error occurred during emotion analysis:", e)
+
+    def getmood(self):
+        return self.currentEmotion
 
 
 def main(detectiveData, emotionData, analyzer):
