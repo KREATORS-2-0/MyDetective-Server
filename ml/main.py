@@ -1,12 +1,11 @@
-from emotion_webcam import EmotionAnalyzer
+from emotion_webcam import FaceAnalyzer
 import time
+def main():
+    analyzer = FaceAnalyzer()
+    analyzer.start_camera()
 
-analyzer = EmotionAnalyzer()
-analyzer.start_camera()
-
-emotions = []
-for i in range(2):
-    a = analyzer.start_analysis({}, i)
-
-print(type(emotions))
-analyzer.stop_camera()
+    for i in range(2):
+        time.sleep(2)
+        analyzer.run()
+    print("\n herehere: ", analyzer.data)
+    analyzer.stop_camera()   
