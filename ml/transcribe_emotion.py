@@ -14,6 +14,7 @@ class SpeechAnalyzer:
         self.model = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
         self.classifier = pipeline('zero-shot-classification', model=self.model)
         self.is_listening = False
+        self.data = {"Emotion": None}
 
     def on_press(self, key):
         try:
@@ -21,22 +22,32 @@ class SpeechAnalyzer:
                 self.is_listening = True
             elif key.char == 's' or key.char == 'q':
                 self.is_listening = False
+                print(self.data)
+                if key.char == 'q':
+                    return False
         except AttributeError:
             pass
 
     def run(self):
+
+        listener = keyboard.Listener(on_press=self.on_press)
+        listener.start()
+
         with sr.Microphone() as source:
 
             while True:
-                try:
-                     audio = self.r.listen(source, timeout=3, phrase_time_limit=None)
-                     text = self.r.recognize_google(audio)
-                     emotion = self.classify_emotion(text)
-                     print(emotion)
-                except Exception as e:
-                    print("An unexpected error occurred:", e)
-                    
-    
+                self.r.adjust_for_ambient_noise(source, duration=0.5)
+                if self.is_listening:
+                    try:
+                        print("Litening...")
+                        audio = self.r.listen(source, timeout=3, phrase_time_limit=None)
+                        text = self.r.recognize_google(audio)
+                        emotion = self.classify_emotion(text)
+                        self.data["Emotion"] = emotion
+                    except Exception as e:
+                        # print("An unexpected error occurred:", e)
+                        pass
+            
     def classify_emotion(self, text):
         output = self.classifier(text, self.candidate_labels, multi_label=False)
         return output['labels'][0]
