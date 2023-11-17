@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import time
 
-openai.api_key = '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'
+openai.api_key = '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'
 
 def get_completion(prompt, messages, model="gpt-4", temperature=0):
     messages.append({"role": "user", "content": prompt})
