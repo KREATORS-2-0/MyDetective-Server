@@ -6,6 +6,7 @@ import pickle
 import sounddevice as sd
 from scipy.io.wavfile import write
 import tempfile
+import os
 
 class VoiceAnalyzer:
     def __init__(self):
@@ -113,9 +114,28 @@ class VoiceAnalyzer:
         print(predicted_emotion)
 
     def run(self):
-        duration = 2
+        duration = 5
         sample_rate = 22050
         print("Starting live voice-emotion analysis")
+
+        try:
+            while True:
+                print("Recording...")
+                audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1)
+                sd.wait()  # Wait for the recording to finish
+
+                # Save the recorded data as a temporary file
+                temp_filename = tempfile.mktemp('.wav')
+                write(temp_filename, sample_rate, audio_data)
+
+                # Analyze emotion
+                self.analyze_emotion(temp_filename)
+
+                # Remove the temporary file
+                os.remove(temp_filename)
+
+        except KeyboardInterrupt:
+            print("Live emotion analysis stopped.")
 
 if __name__ == "__main__":
     voice_analyzer = VoiceAnalyzer()

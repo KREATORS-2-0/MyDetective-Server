@@ -14,18 +14,16 @@ class SpeechAnalyzer:
 
     def on_press(self, key):
         try:
-            if key.char == 'r':
-                self.is_listening = True
-            elif key.char == 's' or key.char == 'q':
+            if key.char == 's' or key.char == 'q':
                 self.is_listening = False
                 print(self.data)
                 print(self.full_text)
-                if key.char == 'q':
-                    return False
+                return False
         except AttributeError:
             pass
 
     def run(self):
+        self.is_listening = True
         listener = keyboard.Listener(on_press=self.on_press)
         listener.start()
 
@@ -40,6 +38,8 @@ class SpeechAnalyzer:
                         self.full_text += (text + '\n')
                         emotion = self.classify_emotion(text)
                         self.data["Emotion"] = emotion
+                    else:
+                        break
                 except sr.WaitTimeoutError:
                     # Timeout error, no speech detected
                     pass
