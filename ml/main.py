@@ -7,5 +7,9 @@ def main():
         time.sleep(1)
         analyzer.run()
     print("\n  : ", analyzer.data)
-    analyzer.stop_camera()   
+    analyzer.stop_camera()
+    speechAnalyzer = speechAnalyzer() 
+    speechAnalyzer.run()
+    print(speechAnalyzer.data)  
+    
 main()
