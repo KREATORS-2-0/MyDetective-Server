@@ -1,8 +1,3 @@
-'''
-$ pip install SpeechRecognition
-$ pip install pyaudio
-'''
-
 import speech_recognition as sr
 from transformers import pipeline
 from pynput import keyboard
@@ -31,26 +26,33 @@ class SpeechAnalyzer:
             pass
 
     def run(self):
-
         listener = keyboard.Listener(on_press=self.on_press)
         listener.start()
 
         with sr.Microphone() as source:
-
             while True:
-                self.r.adjust_for_ambient_noise(source, duration=0.5)
-                if self.is_listening:
-                    try:
-                        print("Litening...")
+                try:
+                    self.r.adjust_for_ambient_noise(source, duration=0.5)
+                    if self.is_listening:
+                        print("Listening...")
                         audio = self.r.listen(source, timeout=3, phrase_time_limit=None)
                         text = self.r.recognize_google(audio)
                         self.full_text += (text + '\n')
                         emotion = self.classify_emotion(text)
                         self.data["Emotion"] = emotion
-                    except Exception as e:
-                        # print("An unexpected error occurred:", e)
-                        pass
-            
+                except sr.WaitTimeoutError:
+                    # Timeout error, no speech detected
+                    pass
+                except sr.UnknownValueError:
+                    # Google Speech Recognition couldn't understand the audio
+                    pass
+                except sr.RequestError:
+                    # Could not request results from Google Speech Recognition service
+                    pass
+                except Exception as e:
+                    # Other unexpected errors
+                    print(f"An unexpected error occurred: {e}")
+
     def classify_emotion(self, text):
         output = self.classifier(text, self.candidate_labels, multi_label=False)
         return output['labels'][0]
@@ -58,4 +60,3 @@ class SpeechAnalyzer:
 if __name__ == "__main__":
     speech_analyzer = SpeechAnalyzer()
     speech_analyzer.run()
-    

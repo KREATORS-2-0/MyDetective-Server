@@ -21,10 +21,7 @@ class FaceAnalyzer:
             if not self.cap.isOpened():
                 print("Cannot open camera")
                 return False
-        ret, self.frame = self.cap.read()
-        if not ret:
-            print("Can't receive frame. Exiting...")  # put red circle in screen (deepface detects face well in center)
-            return    
+
         return True
 
     def run(self):
