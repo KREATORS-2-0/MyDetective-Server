@@ -55,7 +55,7 @@ async def client():
         p1.stop()
         p2.stop()
         face_analyzer.stop_camera()
-        print("Speech Emotion Result:", speech_analyzer.classify_emotion)
+        print("Speech Emotion Result:", speech_analyzer.classify_emotion())
         print("Facial Emotion Result:", face_analyzer.data)
         await sio.emit('command', face_analyzer.data)
 
