@@ -3,9 +3,8 @@ import asyncio
 import time
 import threading
 from emotion_webcam import FaceAnalyzer
-from transcribe_emotion import SpeechAnalyzer
+from transcribe_emotion_fix import SpeechAnaylzer
 from queue import Queue
-import json
 
 
 class ControlledThread:
@@ -38,24 +37,25 @@ async def client():
         time.sleep(2)
         analyzer.run()
 
-    def transcribeEmotion():
-        speechAnalyzer = SpeechAnalyzer()
-        speechAnalyzer.run()
+    def transcribeEmotion(analyzer):
+        analyzer.transcribe()
 
     async def handle_threads():
         face_analyzer = FaceAnalyzer()
+        speech_analyzer = SpeechAnaylzer()
         # speech_analyzer = SpeechAnalyzer()
         face_analyzer.start_camera()
         p1 = ControlledThread(facialEmotion, face_analyzer)
-        # p2 = ControlledThread(transcribeEmotion)
+        p2 = ControlledThread(transcribeEmotion, speech_analyzer)
         p1.start()
-        # p2.start()
+        p2.start()
 
         await running_event.wait()  # Wait until the event is set to stop
 
         p1.stop()
-        # p2.stop()
+        p2.stop()
         face_analyzer.stop_camera()
+        print("Speech Emotion Result:", speech_analyzer.transcription)
         print("Facial Emotion Result:", face_analyzer.data)
         await sio.emit('command', face_analyzer.data)
 
