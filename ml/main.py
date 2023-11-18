@@ -5,6 +5,7 @@ import threading
 from emotion_webcam import FaceAnalyzer
 from transcribe_emotion import SpeechAnalyzer
 from queue import Queue
+import json
 
 
 class ControlledThread:
@@ -56,6 +57,7 @@ async def client():
         # p2.stop()
         face_analyzer.stop_camera()
         print("Facial Emotion Result:", face_analyzer.data)
+        await sio.emit('command', face_analyzer.data)
 
     @sio.event
     async def connect():
