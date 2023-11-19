@@ -6,7 +6,9 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from joblib import dump, load
-from pynput import keyboard
+# from pynput import keyboard
+import keyboard
+import os
 import sys 
 
 triggered = False
@@ -144,10 +146,10 @@ def model(csv_file):
 
     features = features.reshape(1, -1)
 
-    scaler = load('/Users/jamielee/Desktop/NatHacks/scaler.joblib')
+    scaler = load_model('scaler.joblib')
     features_scaled = scaler.transform(features)
 
-    model = load('/Users/jamielee/Desktop/NatHacks/model.joblib')
+    model = load_model('model.joblib')
     prediction = model.predict(features_scaled)
 
     prediction_label = "Truth" if prediction[0] == 1 else "Lie"
@@ -174,3 +176,24 @@ def run(csv_file):
     if triggered:
         # if keyboard "s" is pressed, run the model
         model(csv_file)
+
+# load model from relative current directory
+def load_model(model_name):
+    # Get the directory of the current script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Join it with the relative path of your data
+    model_path = os.path.join(current_dir, model_name)
+
+    # Check if the model exists
+    if not os.path.exists(model_path):
+        raise(f"No model found at: {os.path.abspath(model_path)}")
+
+    # Load the model
+    try:
+        model = load(model_path)
+        print(f"Model loaded from: {os.path.abspath(model_path)}")
+    except Exception as e:
+        print("Model load error occurred: {e}")
+
+    return model
