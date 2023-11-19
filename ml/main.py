@@ -63,22 +63,22 @@ async def client():
             p3.stop()
             p1.stop()
             p2.stop()
-            face_analyzer.stop_camera()
             # print("Speech Emotion Result:", speech_analyzer.classify_emotion())
             # print("Facial Emotion Result:", face_analyzer.data)
-            temp= speech_analyzer.classify_emotion()
-            eegTemp = lie_analyzer.analyze()
-            result= {"transcript": speech_analyzer.transcription, "emotion": temp,"EEG": eegTemp}
-            await sio.emit('command', {"faceData": face_analyzer.data, "speechData": result })
-            face_analyzer.reset_data()
+            temp = speech_analyzer.classify_emotion()
+            eegTemp, eegTemp_confidence = lie_analyzer.analyze()
+            # eegTemp = ""
+            # eegTemp_confidence = 0
+            result= {"transcript": speech_analyzer.transcription, "emotion": temp}
+            result2= {"EEG": eegTemp, "EEG_confidence": eegTemp_confidence*100}
+            print(face_analyzer.data)
+            await sio.emit('command', {"faceData": face_analyzer.data, "speechData": result,"EEGData": result2 })
             speech_analyzer.reset_data()
         except KeyboardInterrupt:
             print("Program halted.")
             face_analyzer.stop_camera()
             lie_analyzer.stop_streaming()
-        finally:
-            face_analyzer.stop_camera()
-            lie_analyzer.stop_streaming()
+
     
 
     @sio.event
