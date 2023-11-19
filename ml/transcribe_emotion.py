@@ -12,20 +12,11 @@ class SpeechAnalyzer:
         self.data = {"Emotion": None}
         self.full_text = ""
 
-    def on_press(self, key):
-        try:
-            if key.char == 's' or key.char == 'q':
-                self.is_listening = False
-                print(self.data)
-                print(self.full_text)
-                return False
-        except AttributeError:
-            pass
+
 
     def run(self):
         self.is_listening = True
-        listener = keyboard.Listener(on_press=self.on_press)
-        listener.start()
+    
 
         with sr.Microphone() as source:
             while True:
@@ -56,6 +47,10 @@ class SpeechAnalyzer:
     def classify_emotion(self, text):
         output = self.classifier(text, self.candidate_labels, multi_label=False)
         return output['labels'][0]
+    def reset_data(self):
+        self.data = {"Emotion": None}
+        self.full_text = ""
+        
 
 if __name__ == "__main__":
     speech_analyzer = SpeechAnalyzer()

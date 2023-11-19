@@ -48,6 +48,8 @@ class FaceAnalyzer:
         if self.cap:
             self.cap.release()
             cv2.destroyAllWindows()
+    def reset_data(self):
+        self.data =dict()
     
     def place_circle(self):
         height, width = self.frame.shape[:2]

@@ -32,6 +32,9 @@ class ControlledThread:
 async def client():
     sio = socketio.AsyncClient()
     running_event = asyncio.Event()
+    face_analyzer = FaceAnalyzer()
+    speech_analyzer= SpeechAnaylzer()
+    
 
     def facialEmotion(analyzer):
         time.sleep(2)
@@ -41,15 +44,11 @@ async def client():
         analyzer.transcribe()
 
     async def handle_threads():
-        face_analyzer = FaceAnalyzer()
-        speech_analyzer = SpeechAnaylzer()
-        # speech_analyzer = SpeechAnalyzer()
-        face_analyzer.start_camera()
+        
         p1 = ControlledThread(facialEmotion, face_analyzer)
         p2 = ControlledThread(transcribeEmotion, speech_analyzer)
         p1.start()
         p2.start()
-
         await running_event.wait()  # Wait until the event is set to stop
 
         p1.stop()
@@ -58,6 +57,9 @@ async def client():
         print("Speech Emotion Result:", speech_analyzer.classify_emotion())
         print("Facial Emotion Result:", face_analyzer.data)
         await sio.emit('command', face_analyzer.data)
+        face_analyzer.reset_data()
+        speech_analyzer.reset_data()
+    
 
     @sio.event
     async def connect():
@@ -69,11 +71,13 @@ async def client():
     @sio.event
     async def disconnect():
         print('Disconnected from the server.')
+        face_analyzer.stop_camera()
 
     @sio.event
     async def connection(data):
         print('Connection established.', data)
-
+        face_analyzer.start_camera()
+        
     @sio.event
     async def command(data):
         if data == "Start":
