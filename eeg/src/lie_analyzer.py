@@ -46,7 +46,6 @@ class LieAnalyzer():
         
         # Get the directory of the current script
         current_dir = os.path.dirname(os.path.abspath(__file__))
-
         # Create the data directory if it doesn't exist
         os.makedirs(os.path.join(current_dir, "..", data_dir), exist_ok=True)
         # Path to the file in the data directory
