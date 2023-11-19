@@ -153,7 +153,7 @@ def model(csv_file):
     prediction = model.predict(features_scaled)
 
     prediction_label = "Truth" if prediction[0] == 1 else "Lie"
-    print(prediction_label)
+    return prediction_label
 
 def on_press(key):
     global triggered

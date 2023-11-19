@@ -3,15 +3,19 @@ import traceback
 import os
 import keyboard
 
-from ml.lie_detection import lie_detection
+from lie_detection import model
 from biosensor_streamer import BiosensorStreamer
 
 
 class LieAnalyzer():
     def __init__(self):
-        self.eeg_data = pd.DataFrame(columns=BiosensorStreamer.get_labels())
+        self.eeg_data = pd.DataFrame(columns=BiosensorStreamer.columns)
         self.streamer = BiosensorStreamer()
         self.analysis_result = ""
+
+    def reset_data(self):
+        self.eeg_data = pd.DataFrame(columns=BiosensorStreamer.columns)
+        return self.eeg_data
 
     def start_streaming(self):
         try:
@@ -36,7 +40,6 @@ class LieAnalyzer():
             self.eeg_data = pd.concat([self.eeg_data, partial_eeg_data], axis=0, ignore_index=True)
 
             if keyboard.is_pressed("esc"):
-                self.write_as_csv_data(self.eeg_data, "data", "eeg_data.csv")
                 break
         return
 
@@ -54,12 +57,14 @@ class LieAnalyzer():
         dataframe.to_csv(filepath, index=False)
         return True
 
-
     def analyze(self):
         # write eeg_data into CSV file
         self.write_as_csv_data(self.eeg_data, "data", "temp_eeg.csv")
         # update analysis_result
-        self.analysis_result = lie_detection.model("../data/temp_eeg.csv")
+        # Get the directory of the current script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+
+        self.analysis_result = model(os.path.join(current_dir, "..", "data", "temp_eeg.csv"))
         # reset the eeg_data
-        self.eeg_data = pd.DataFrame(columns=BiosensorStreamer.get_labels())
+        self.reset_data()
         return True
