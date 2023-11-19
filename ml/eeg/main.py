@@ -1,3 +1,9 @@
+'''
+Run the lie_analyzer class and the data obtained from it through
+the ML model.
+'''
+
+
 from lie_analyzer import LieAnalyzer
 
 if __name__ == "__main__":

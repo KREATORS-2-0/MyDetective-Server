@@ -26,6 +26,7 @@ class BiosensorStreamer:
         self.board = BoardShim(self.board_id, self.params)
 
     def find_com_port(self):
+        '''Search for the comport on the device the ganglion dongle is connected to.'''
         ports = list(serial.tools.list_ports.comports())
         for port in ports:
             # Check if the VID:PID in the HWID matches that of the Ganglion board
@@ -58,8 +59,8 @@ class BiosensorStreamer:
             eeg_channels = BoardShim.get_eeg_channels(self.board_id)
             time_channel = BoardShim.get_timestamp_channel(self.board_id)
 
-            eeg_data = data[eeg_channels]  # 2d-array, var goes right
-            time_data = data[time_channel]  # 1d-array, var goes down
+            eeg_data = data[eeg_channels]  # 2d-array, each var goes right
+            time_data = data[time_channel]  # 1d-array, each var goes down
 
             # 1d-array to 2d-array, var goes right
             time_data = np.reshape(time_data, (1, len(time_data)))
@@ -86,4 +87,5 @@ class BiosensorStreamer:
     
 
     def get_labels(self):
+        '''Returns the columns/labels of the class dataframe'''
         return self.columns
