@@ -13,6 +13,7 @@ class LieAnalyzer():
         self.streamer = BiosensorStreamer()
         self.eeg_data = pd.DataFrame(columns=self.streamer.columns)
         self.analysis_result = ""
+        self.analysis_confidence = 0
 
     
     def reset_data(self):
@@ -35,6 +36,7 @@ class LieAnalyzer():
             print(f"An error occurred: {e}\n")
             # Print the full stack trace using traceback
             traceback.print_exc()
+            self.streamer.stop_streaming()
             print("\n")
 
     def stop_streaming(self):
@@ -88,7 +90,7 @@ class LieAnalyzer():
         if self.eeg_data.empty:
             raise("DataFrame is empty")
         self.eeg_data.dropna()
-        self.analysis_result = model(self.eeg_data)
+        self.analysis_result, self.analysis_confidence = model(self.eeg_data)
         # reset the eeg_data
         self.reset_data()
-        return self.analysis_result
+        return self.analysis_result, self.analysis_confidence

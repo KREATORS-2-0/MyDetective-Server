@@ -78,6 +78,7 @@ async def client():
             print("Program halted.")
             face_analyzer.stop_camera()
             lie_analyzer.stop_streaming()
+      
 
     
 

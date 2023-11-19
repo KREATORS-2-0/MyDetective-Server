@@ -149,9 +149,10 @@ def model(df):
 
     model = load_model('model.joblib')
     prediction = model.predict(features_scaled)
+    prediction_confidence = model.predict_proba(features_scaled)
 
     prediction_label = "Truth" if prediction[0] == 1 else "Lie"
-    return prediction_label
+    return prediction_label, max(prediction_confidence[0])
 
 def on_press(key):
     global triggered
