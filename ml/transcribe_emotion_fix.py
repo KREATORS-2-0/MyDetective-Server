@@ -48,12 +48,16 @@ class SpeechAnaylzer:
                 print(f"An unexpected error occurred: {e}")
 
     def classify_emotion(self):
-        output = self.classifier(
-            self.transcription, self.candidate_labels, multi_label=False)
-        return output['labels'][0]
+        if self.transcription !="":
+            output = self.classifier(
+                self.transcription, self.candidate_labels, multi_label=False)
+            return output['labels'][0]
+        else:
+            return "not detected"
 
-    def clear_transcription(self):
-        self.transcription = ""
+    def reset_data(self):
+        self.data = {"Emotion": None}
+        self.full_text = ""
 
 
 if __name__ == "__main__":

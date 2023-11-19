@@ -2,7 +2,7 @@
 $ pip install SpeechRecognition
 $ pip install pyaudio
 '''
-
+from transformers import pipeline
 import speech_recognition as sr
 
 # Initialize recognizer
