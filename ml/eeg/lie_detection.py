@@ -11,10 +11,10 @@ import os
 
 triggered = False
 
-def read_data(csv_file):
-    # Process the data by reading the file
-    df = pd.read_csv(csv_file)
-    return df
+# def read_data(csv_file):
+#     # Process the data by reading the file
+#     df = pd.read_csv(csv_file)
+#     return df
 
 def filter(df):
     # remove noise by applying Fourier Transform and inverse it
@@ -75,9 +75,9 @@ def data_segmentation(df):
 
     return features, labels
 
-def training(csv_file):
+def training(raw_df):
     print("training..")
-    raw_df = read_data(csv_file)
+    # raw_df = read_data(csv_file)
     df = filter(raw_df)
     features, labels = data_segmentation(df)
     # Splitting data into training and testing data sets
@@ -105,8 +105,8 @@ def training(csv_file):
     print(classification_report(y_test, y_pred))
     print(f"Accuracy: {accuracy_score(y_test, y_pred)}")
 
-def model(csv_file):
-    df = read_data(csv_file)
+def model(df):
+    # df = read_data(csv_file)
 
     # Define your frequency thresholds
     low_freq_threshold = 5  # example value, set your own threshold

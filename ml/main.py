@@ -5,7 +5,7 @@ import threading
 from emotion_webcam import FaceAnalyzer
 from transcribe_emotion_fix import SpeechAnaylzer
 from queue import Queue
-#from eeg.lie_analyzer import LieAnalyzer
+from eeg.lie_analyzer import LieAnalyzer
 
 
 class ControlledThread:
@@ -35,7 +35,7 @@ async def client():
     running_event = asyncio.Event()
     face_analyzer = FaceAnalyzer()
     speech_analyzer= SpeechAnaylzer()
-    #lie_analyzer = LieAnalyzer()
+    lie_analyzer = LieAnalyzer()
     
 
     def facialEmotion(analyzer):
@@ -46,31 +46,39 @@ async def client():
         analyzer.transcribe()
         
     def lieAnalyzing(analyzer):
-        analyzer.append_data(True)
+        analyzer.append_data(print_data=False)
 
     async def handle_threads():
-        face_analyzer.start_camera()
-        p1 = ControlledThread(facialEmotion, face_analyzer)
-        p2 = ControlledThread(transcribeEmotion, speech_analyzer)
-        #p3 = ControlledThread(lieAnalyzing, lie_analyzer)
-        p1.start()
-        p2.start()
-        #p3.start()
-        await running_event.wait()  # Wait until the event is set to stop
         
-        #p3.stop()
-        p1.stop()
-        p2.stop()
-        face_analyzer.stop_camera()
-        temp= speech_analyzer.classify_emotion()
-        result= {"transcript": speech_analyzer.transcription, "emotion": temp }
-        print("Speech Emotion Result:", result)
-        print("Facial Emotion Result:", face_analyzer.data)
-       # print("Lie analyzing Result: ", )
-        await sio.emit('command', {"faceData": face_analyzer.data, "speechData": result })
-        face_analyzer.reset_data()
-        speech_analyzer.reset_data()
+        try:
+            p1 = ControlledThread(facialEmotion, face_analyzer)
+            p2 = ControlledThread(transcribeEmotion, speech_analyzer)
+            p3 = ControlledThread(lieAnalyzing, lie_analyzer)
         
+            p1.start()
+            p2.start()
+            p3.start()
+            await running_event.wait()  # Wait until the event is set to stop
+            
+            p3.stop()
+            p1.stop()
+            p2.stop()
+            face_analyzer.stop_camera()
+            # print("Speech Emotion Result:", speech_analyzer.classify_emotion())
+            # print("Facial Emotion Result:", face_analyzer.data)
+            temp= speech_analyzer.classify_emotion()
+            eegTemp = lie_analyzer.analyze()
+            result= {"transcript": speech_analyzer.transcription, "emotion": temp,"EEG": eegTemp}
+            await sio.emit('command', {"faceData": face_analyzer.data, "speechData": result })
+            face_analyzer.reset_data()
+            speech_analyzer.reset_data()
+        except KeyboardInterrupt:
+            print("Program halted.")
+            face_analyzer.stop_camera()
+            lie_analyzer.stop_streaming()
+        finally:
+            face_analyzer.stop_camera()
+            lie_analyzer.stop_streaming()
     
 
     @sio.event
@@ -83,14 +91,14 @@ async def client():
     @sio.event
     async def disconnect():
         print('Disconnected from the server.')
-       # face_analyzer.stop_camera()
-        #lie_analyzer.stop_streaming()
+        face_analyzer.stop_camera()
+        lie_analyzer.stop_streaming()
 
     @sio.event
     async def connection(data):
         print('Connection established.', data)
-        #face_analyzer.start_camera()
-        #lie_analyzer.start_streaming()
+        face_analyzer.start_camera()
+        lie_analyzer.start_streaming()
         
     @sio.event
     async def command(data):

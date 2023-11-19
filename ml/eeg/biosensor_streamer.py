@@ -44,8 +44,9 @@ class BiosensorStreamer:
     
 
     def display_data(self, data):
-        if data is not None and not data.empty():
-            print('\r' + str(data.iloc[-1]), end = ' ', flush=True)
+        if data is not None and not data.empty:
+            # Ensure we have data to print, and that the DataFrame is not empty
+            print('\r' + str(data.iloc[-1]), end='', flush=True)
 
 
     def read_data(self):

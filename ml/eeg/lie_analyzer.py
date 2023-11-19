@@ -1,23 +1,28 @@
+import time
 import pandas as pd
 import traceback
 import os
 import keyboard
 
-from lie_detection import model
-from biosensor_streamer import BiosensorStreamer
+from .lie_detection import model
+from .biosensor_streamer import BiosensorStreamer
 
 
 class LieAnalyzer():
     def __init__(self):
-        self.eeg_data = pd.DataFrame(columns=BiosensorStreamer.columns)
         self.streamer = BiosensorStreamer()
+        self.eeg_data = pd.DataFrame(columns=self.streamer.columns)
         self.analysis_result = ""
 
     
     def reset_data(self):
         '''resets eeg_data frame so that it does not retain previous data.'''
-        self.eeg_data = pd.DataFrame(columns=BiosensorStreamer.columns)
-        return self.eeg_data
+        print(f'The data with the size of {len(self.eeg_data)} is resetted.')
+        self.eeg_data = pd.DataFrame(columns=self.streamer.columns)
+        print(f'The EEG data size now is {len(self.eeg_data)}.')
+        # current_dir = os.path.dirname(os.path.abspath(__file__))
+        # os.remove(os.path.join(current_dir, "data", "temp_eeg.csv"))
+        return
 
     def start_streaming(self):
         '''Start streaming the data from the Ganglion board.'''
@@ -44,45 +49,46 @@ class LieAnalyzer():
         keyword arguments:
         print_data -- show the data being streamed
         '''
-        while True:
-            partial_eeg_data = self.streamer.read_data()
-            if print_data:
-                self.streamer.display_data(partial_eeg_data)
-            self.eeg_data = pd.concat([self.eeg_data, partial_eeg_data], axis=0, ignore_index=True)
 
-            if keyboard.is_pressed("esc"):
-                break
+        partial_eeg_data = self.streamer.read_data()
+        if print_data:
+            self.streamer.display_data(partial_eeg_data)
+        self.eeg_data = pd.concat([self.eeg_data, partial_eeg_data], axis=0, ignore_index=True)
+
+            # if keyboard.is_pressed("esc"):
+            #     break
         return
 
-    def write_as_csv_data(self, dataframe, data_dir, filename):
-        '''
-        Save the data to a directory called "data", on the same level as the 
-        directory this class lies in
-        '''
-        if dataframe is None or dataframe.empty:
-            return False
-        
-        # Get the directory of the current script
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # Create the data directory if it doesn't exist
-        os.makedirs(os.path.join(current_dir, "..", data_dir), exist_ok=True)
-        # Path to the file in the data directory
-        filepath = os.path.join(data_dir, filename)
-        # Write the data to the file
-        dataframe.to_csv(filepath, index=False)
-        return True
+    # def write_as_csv_data(self, dataframe, data_dir, filename):
+    #     '''
+    #     Save the data to a directory called "data", on the same level as the 
+    #     directory this class lies in
+    #     '''
+    #     # Get the directory of the current script
+    #     current_dir = os.path.dirname(os.path.abspath(__file__))
+    #     # Create the data directory if it doesn't exist
+    #     os.makedirs(os.path.join(current_dir, data_dir), exist_ok=True)
+    #     # Path to the file in the data directory
+    #     filepath = os.path.join(data_dir, filename)
+    #     # Write the data to the file
+    #     dataframe.to_csv(filepath, index=False)
+    #     print(dataframe.tail(5))
+    #     print("Dataframe is saved.")
+    #     return True
 
     def analyze(self):
         '''
         Analyze the csv file with the eeg data and reset once analysis is concluded
         '''
         # write eeg_data into CSV file
-        self.write_as_csv_data(self.eeg_data, "data", "temp_eeg.csv")
+        # self.write_as_csv_data(self.eeg_data, "data", "temp_eeg.csv")
         # update analysis_result
         # Get the directory of the current script
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-
-        self.analysis_result = model(os.path.join(current_dir, "..", "data", "temp_eeg.csv"))
+        # current_dir = os.path.dirname(os.path.abspath(__file__))
+        if self.eeg_data.empty:
+            raise("DataFrame is empty")
+        self.eeg_data.dropna()
+        self.analysis_result = model(self.eeg_data)
         # reset the eeg_data
         self.reset_data()
-        return True
+        return self.analysis_result
