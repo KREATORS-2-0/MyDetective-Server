@@ -6,10 +6,8 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from joblib import dump, load
-# from pynput import keyboard
 import keyboard
 import os
-import sys 
 
 triggered = False
 
